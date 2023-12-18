@@ -53,10 +53,21 @@ $orderid = checkCbInvoiceID($orderid, $gatewayParams['name']);
 checkCbTransID($order_invoice);
 
 if ($order_status == 'complete') {
+    $amount = $invoice->price;
+
+    if ($gatewayParams['convertto']) {
+        $result = select_query("tblclients", "tblinvoices.invoicenum,tblclients.currency,tblcurrencies.code", array("tblinvoices.id" => $invoiceId), "", "", "", "tblinvoices ON tblinvoices.userid=tblclients.id INNER JOIN tblcurrencies ON tblcurrencies.id=tblclients.currency");
+        $data = mysql_fetch_array($result);
+        $invoice_currency_id = $data['currency'];
+
+        $converto_amount = convertCurrency($amount, $gatewayParams['convertto'], $invoice_currency_id);
+        $amount = format_as_currency($converto_amount);
+    }
+
     addInvoicePayment(
         $orderid,
         $order_invoice,
-        $invoice->price,
+        $amount,
         0,
         'bitcartcheckout'
     );
